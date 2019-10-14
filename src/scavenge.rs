@@ -3,7 +3,7 @@ use rand::seq::SliceRandom;
 use std::thread::sleep;
 use std::time::Duration;
 
-use crate::inventory::{Inventory, INV_MAX};
+use crate::inventory::Inventory;
 use crate::items::{Item, ItemProperties, ItemStats};
 use crate::stats::Stats;
 
@@ -83,7 +83,7 @@ const SCAVENGEABLE_ITEMS: [Item; 9] = [
 ];
 
 pub fn scavenge(inv: &mut Inventory, stats: &mut Stats) {
-  let slots_left = INV_MAX - inv.len();
+  let slots_left = inv.slots_left();
   let number_of_items = if slots_left < 3 { slots_left } else { 3 };
 
   if number_of_items == 0 {
@@ -98,7 +98,7 @@ pub fn scavenge(inv: &mut Inventory, stats: &mut Stats) {
     for _number in 0..number_of_items {
       let item = SCAVENGEABLE_ITEMS.choose(&mut rng).unwrap().clone();
       println!("You found {}", item.name.bold());
-      inv.push(item);
+      inv.add_item(item);
     }
   }
 }

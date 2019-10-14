@@ -22,7 +22,7 @@ mod stats;
 use crate::camp::{collect, stoke_fire, Fire, WaterCollector};
 use crate::crafting::{craft_item, print_recipes};
 use crate::hunt::hunt;
-use crate::inventory::{print_inventory, remove_inventory, Inventory};
+use crate::inventory::Inventory;
 use crate::items::ItemProperties;
 use crate::scavenge::scavenge;
 use crate::stats::{decrease_stats, Stat, Stats};
@@ -33,7 +33,7 @@ fn main() {
 
     print_help();
 
-    let mut inventory: Inventory = Vec::new();
+    let mut inventory: Inventory = Inventory::new();
 
     let fire = Arc::new(Mutex::new(Fire::new()));
     let water_collector = Arc::new(Mutex::new(WaterCollector::new()));
@@ -72,7 +72,7 @@ fn main() {
                 "rest" | "r" => rest(&mut stats.lock().unwrap()),
                 "hunt" | "h" => hunt(&mut inventory, &mut stats.lock().unwrap()),
                 "scavenge" | "s" => scavenge(&mut inventory, &mut stats.lock().unwrap()),
-                "inventory" | "i" => print_inventory(&inventory),
+                "inventory" | "i" => inventory.print_inventory(),
                 "stats" | "st" => {
                     let print_stats = stats.lock().unwrap();
                     println!("Current {:#?}", *print_stats);
@@ -95,7 +95,7 @@ fn main() {
                 }
                 "remove" | "rm" => {
                     let input = request_input("What do you want to remove?");
-                    remove_inventory(&mut inventory, input.trim());
+                    inventory.rm_item(input.trim());
                 }
                 "die" => {
                     println!("You died after {} days", days.lock().unwrap());
@@ -114,7 +114,7 @@ fn main() {
 
                         matched = match action {
                             "remove" | "rm" => {
-                                remove_inventory(&mut inventory, target);
+                                inventory.rm_item(target);
                                 true
                             }
                             "consume" | "c" => {
@@ -234,11 +234,11 @@ fn rest(stats: &mut Stats) {
 }
 
 fn consume(inv: &mut Inventory, item_id: &str, stats: &mut Stats) {
-    let item_idx = inv.iter().position(|item| item.id == item_id);
+    let item_idx = inv.items_iter().position(|item| item.id == item_id);
 
     match item_idx {
         Some(idx) => {
-            let item = &inv[idx];
+            let item = inv.get_item(idx);
             match &item.properties {
                 ItemProperties::ConsumeableItem { value, risk, .. } => {
                     stats.water.increase(value.water);
@@ -263,7 +263,7 @@ fn consume(inv: &mut Inventory, item_id: &str, stats: &mut Stats) {
                         println!("Yummy!");
                     }
 
-                    inv.remove(idx);
+                    inv.get_items().remove(idx);
                 }
                 _ => println!("{}", "Item is not consumable".red()),
             }

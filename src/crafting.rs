@@ -2,7 +2,7 @@ use colored::*;
 use std::fmt;
 
 use crate::camp::{CollectorStatus, Fire, FireStatus, WaterCollector};
-use crate::inventory::{remove_inventory, Inventory};
+use crate::inventory::Inventory;
 use crate::items::{Item, ItemProperties, ItemStats};
 
 #[derive(Debug)]
@@ -301,7 +301,7 @@ pub fn craft_item(
             }
 
             for item in items_needed {
-                let amount_in_inventory = inv.iter().filter(|i| i.id == item.0).count();
+                let amount_in_inventory = inv.items_iter().filter(|i| i.id == item.0).count();
                 can_be_crafted = can_be_crafted && amount_in_inventory >= item.1;
             }
 
@@ -313,7 +313,7 @@ pub fn craft_item(
             }
 
             for tool in &recipe.tools_needed {
-                let is_in_inventory = inv.iter().find(|i| i.id == *tool);
+                let is_in_inventory = inv.items_iter().find(|i| i.id == *tool);
 
                 if let None = is_in_inventory {
                     can_be_crafted = false;
@@ -323,18 +323,18 @@ pub fn craft_item(
             if can_be_crafted {
                 for item in items_needed {
                     for _ in 0..item.1 {
-                        remove_inventory(inv, item.0);
+                        inv.rm_item(item.0);
                     }
                 }
 
                 for tool in &recipe.tools_needed {
-                    let tool_inv = inv.iter_mut().find(|i| i.id == *tool).unwrap();
+                    let tool_inv = inv.items_iter_mut().find(|i| i.id == *tool).unwrap();
 
                     let broke_down = tool_inv.decrease_use();
 
                     if broke_down {
                         println!("{} {}", tool.red(), "broke down".red());
-                        remove_inventory(inv, tool);
+                        inv.rm_item(tool);
                     }
                 }
 
@@ -361,7 +361,7 @@ pub fn craft_item(
                                 .unwrap()
                                 .clone();
                             println!("You got {}", result.name.bold());
-                            inv.push(result);
+                            inv.add_item(result);
                         }
                     }
                 }
